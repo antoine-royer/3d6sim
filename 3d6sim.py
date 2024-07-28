@@ -59,11 +59,19 @@ def main():
     for nb_dices, text in ((3, "Jeu normal"), (4, "Avec avantage"), (2, "Avec désavantage")):
         print(f"\t{text}\n\n")
         for attribute in range(1, 7):
+            probabilities = [
+                binomial_distribution(attribute / 6, nb_dices, success) * 100
+                for success in range(nb_dices + 1)
+            ]
+            for i in range(nb_dices - 1, 0, -1):
+                probabilities[i] += probabilities[i + 1]
+            
+            # Display
             print(f"Attribut : {attribute}")
             for success in range(nb_dices + 1):
                 print(
                     f"{success} réussites -> "
-                    f"{binomial_distribution(attribute / 6, nb_dices, success) * 100:.2f} %"
+                    f"{probabilities[success]:.2f} %"
                 )
             print()
         print()
