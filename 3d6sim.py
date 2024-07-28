@@ -1,113 +1,78 @@
-from random import randrange
+"""
+The 3d6 system is a role-playing system available under ORC license. This little script simulates
+rolls to give you an idea of your chances of success.
+
+For more informations about the role-playing system, please see: https://3d6.ovh/ and about ORC
+License: https://paizo.com/orclicense
+"""
 
 
-class SimpleDie:
-    """Basic class for YZE dice
+def factorial(n: int):
+    """Compute n factorial."""
+    return 1 if n == 0 else n * factorial(n - 1)
+
+
+def binomial_coeff(n: int, p: int):
+    """Compute the binomial coefficient nCp."""
+    return factorial(n) // (factorial(p) * factorial(n - p))
+
+
+def binomial_distribution(success_probability: float, nb_experiences: int, nb_success: int):
     """
-    def __init__(self, size=6):
-        """Check size of the dice, 6 by default or 8, 10, 12. Return a dice
-        object with a size attribute.
-        """
-        dice_sizes = [6, 8, 10, 12]
-        d = [x for x in dice_sizes if x == size]
-        if len(d) != 1:
-            raise ValueError(f"Dice size should be one of 6, 8, 10, 12. {size} was provided.")
-        self.size = size
+    Calculate the probability of having ``nb_success`` from ``nb_experiments`` Bernoulli
+    experiments.
 
-    def throw(self):
-        """Generate a pseudo-random number in the range of the SimpleDie
-        Object. It returns an int.
-        """
-        return randrange(1, self.size + 1)
+    Parameters
+    ----------
+    success_probability : float
+        The probability of having a success. Must be between 0 and 1.
+    nb_experiences : int
+        The number of Bernoulli experiments that make up the binomial distribution.
+    nb_success : int
+        The number of success (should be less than the number of experiments).
+
+    Returns
+    -------
+    float
+        The probability of having ``nb_success``.
+
+    Raises
+    ------
+    ValueError
+        Raised if the requested number of successes is greater than the number of experiences.
+    """
+    if nb_success > nb_experiences:
+        raise ValueError(
+            f"the number of successes (given {nb_success}) must be less that the number of "
+            f"experiments (given {nb_experiences})"
+        )
+
+    return (
+        binomial_coeff(nb_experiences, nb_success)
+        * success_probability**nb_success
+        * (1 - success_probability) ** (nb_experiences - nb_success)
+    )
 
 
 def main():
-    """Do the magic
-    """
-    d = SimpleDie()
-    print("""
+    """Display the probabilities to have a given number of success, depending on the advantages."""
+    for nb_dices, text in ((3, "Jeu normal"), (4, "Avec avantage"), (2, "Avec désavantage")):
+        print(f"\t{text}\n\n")
+        for attribute in range(1, 7):
+            print(f"Attribut : {attribute}")
 
- Jet normal :
+            probabilities = [
+                binomial_distribution(attribute / 6, nb_dices, success) * 100
+                for success in range(nb_dices + 1)
+            ]
 
-    """)
-    for i in range(1, 7):
-        print(f"Attribut: {i}")
-        total_successes = {
-            0: 0,
-            1: 0,
-            2: 0,
-            3: 0,
-            }
-        for wow in range(1000000):
-            successes = 0
-            for j in range(1, 4):
-                r = d.throw()
-                if r <= i:
-                    successes += 1
-                    total_successes[successes] += 1
-            if successes == 0:
-                total_successes[0] += 1
-            successes = 0
-        print(f"0 réussites -> {total_successes[0] / 10000} %")
-        print(f"1 réussites -> {total_successes[1] / 10000} %")
-        print(f"2 réussites -> {total_successes[2] / 10000} %")
-        print(f"3 réussites -> {total_successes[3] / 10000} %")
-
-    print("""
-
- Avec avantage :
-    
-    """)
-    for i in range(1, 7):
-        print(f"Attribut: {i}")
-        total_successes = {
-            0: 0,
-            1: 0,
-            2: 0,
-            3: 0,
-            4: 0,
-            }
-        for wow in range(1000000):
-            successes = 0
-            for j in range(1, 5):
-                r = d.throw()
-                if r <= i:
-                    successes += 1
-                    total_successes[successes] += 1
-            if successes == 0:
-                total_successes[0] += 1
-            successes = 0
-        print(f"0 réussites -> {total_successes[0] / 10000} %")
-        print(f"1 réussites -> {total_successes[1] / 10000} %")
-        print(f"2 réussites -> {total_successes[2] / 10000} %")
-        print(f"3 réussites -> {total_successes[3] / 10000} %")
-        print(f"4 réussites -> {total_successes[4] / 10000} %")
-
-    print("""
-
- Avec désavantage :
-    
- """)
-    for i in range(1, 7):
-        print(f"Attribut: {i}")
-        total_successes = {
-            0: 0,
-            1: 0,
-            2: 0,
-            }
-        for wow in range(1000000):
-            successes = 0
-            for j in range(1, 3):
-                r = d.throw()
-                if r <= i:
-                    successes += 1
-                    total_successes[successes] += 1
-            if successes == 0:
-                total_successes[0] += 1
-            successes = 0
-        print(f"0 réussites -> {total_successes[0] / 10000} %")
-        print(f"1 réussites -> {total_successes[1] / 10000} %")
-        print(f"2 réussites -> {total_successes[2] / 10000} %")
+            for i in range(nb_dices + 1):
+                proba = probabilities[i]
+                if 0 < i < nb_dices:
+                    proba += sum(probabilities[i + 1 :])
+                print(f"{i} réussites -> " f"{proba:.2f} %")
+            print()
+        print()
 
 
 if __name__ == "__main__":
